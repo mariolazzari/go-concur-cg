@@ -1,8 +1,10 @@
 # Go concurrency by the Coding Gopher
 
-[YouTube](https://www.youtube.com/watch?v=3MY0B5PBgR8&list=PLqR6Wq9GKBiunQOAao0_Sjda0Kvp5TqGO&index=9)
+[YouTube playlist](https://www.youtube.com/watch?v=3MY0B5PBgR8&list=PLqR6Wq9GKBiunQOAao0_Sjda0Kvp5TqGO&index=9)
 
 ## Goroutines
+
+ Lightweight, efficient threads managed by the Go runtime, allowing non-blocking, parallel tasks.
 
 ```go
 package main
@@ -31,6 +33,8 @@ func main() {
 ```
 
 ## Channels (bidirectional)
+
+Can both send and receive data
 
 ```go
 package main
@@ -71,6 +75,8 @@ func main() {
 
 ## Unidirectional Channels
 
+Either send or receive data but not both, making your concurrent programs more efficient and clear.
+
 ```go
 package main
 
@@ -104,43 +110,9 @@ func main() {
 }
 ```
 
-## Unidirectional Channels
-
-```go
-package main
-
-import (
-	"fmt"
-	"time"
-)
-
-// unidirectional channel for sending data
-func sendData(sendOnly chan<- string) {
-	sendOnly <- "hello from sendData"
-}
-
-// unidirectional channel for receiving data
-func receiveData(receiveOnly <-chan string) {
-	msg := <-receiveOnly
-	fmt.Println("Received:", msg)
-}
-
-func main() {
-	start := time.Now()
-	ch := make(chan string)
-
-	// start goroutine sending data
-	go sendData(ch)
-
-	// start goroutine receiving data
-	go receiveData(ch)
-
-	time.Sleep(time.Second)
-	fmt.Println("Elapsed time:", time.Since(start))
-}
-```
-
 ## Buffered channels
+
+Buffered channels allow Goroutines to send multiple messages without blocking, improving the efficiency of your concurrent programs.
 
 ```go
 package main
@@ -173,6 +145,8 @@ func main() {
 ```
 
 ## Mutex
+
+Use mutexes in Go for synchronizing goroutines and preventing race conditions in concurrent programming.
 
 ```go
 package main
@@ -215,5 +189,52 @@ func main() {
 
 ## Worker pool pattern
 
+Worker pools are a powerful way to limit the number of goroutines processing tasks simultaneously, improving performance and resource efficiency in your Go programs. 
+
 ```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func worker(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for job := range jobs {
+		fmt.Printf("Worked %d started job %d\n", id, job)
+		results <- job * 2                // simulate work by multipling by 2
+		time.Sleep(20 * time.Millisecond) // ensure different workers for contiguos jobs
+	}
+}
+
+func main() {
+	jobs := make(chan int, 5)
+	results := make(chan int, 5)
+
+	var wg sync.WaitGroup
+
+	// start 3 workers
+	for i := 1; i <= 3; i++ {
+		wg.Add(1)
+		go worker(i, jobs, results, &wg)
+	}
+
+	// send jobs to workers
+	for i := 1; i <= 5; i++ {
+		jobs <- i
+	}
+	close(jobs) // no more jobs to send
+
+	wg.Wait()
+	close(results)
+
+	// collect results
+	for result := range results {
+		fmt.Println("Result:", result)
+	}
+}
 ```
+
+## Concurrent url fetcher
