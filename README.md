@@ -1,6 +1,6 @@
 # Go concurrency by the Coding Gopher
 
-[YouTube playlist](https://www.youtube.com/watch?v=3MY0B5PBgR8&list=PLqR6Wq9GKBiunQOAao0_Sjda0Kvp5TqGO&index=9)
+[YouTube playlist](https://www.youtube.com/playlist?list=PLqR6Wq9GKBiunQOAao0_Sjda0Kvp5TqGO)
 
 ## Goroutines
 
@@ -306,5 +306,39 @@ func main() {
 			fmt.Printf("Fetched %s: %v\n", result.URL, result.Duration)
 		}
 	}
+}
+```
+
+## Sync once
+
+Singleton pattern
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+var (
+	config     map[string]string
+	initConfig sync.Once
+)
+
+func loadConfig() {
+	initConfig.Do(func() {
+		fmt.Println("Init config...")
+		config = map[string]string{
+			"env":     "prod",
+			"version": "1.0.0",
+		}
+	})
+}
+
+func main() {
+	loadConfig() // executed once
+	loadConfig() // ingored
+	fmt.Printf("Config: %v\n", config)
 }
 ```
