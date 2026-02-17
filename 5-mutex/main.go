@@ -14,9 +14,11 @@ var (
 
 func increment() {
 	defer wg.Done()
-	mutex.Lock() // acquire lock before accessing shared variable
+	mutex.Lock()         // acquire lock before accessing shared variable
+	defer mutex.Unlock() // defer unlock execution in order to release lock on error too
+
 	counter++
-	mutex.Unlock() // release lock
+	// mutex.Unlock() // release lock
 }
 
 func main() {
